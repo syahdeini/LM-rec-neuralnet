@@ -391,9 +391,9 @@ class RNN(object):
 
         print("setting U, V, W to matrices from best epoch")
         self.U, self.V, self.W = bestU, bestV, bestW
-        np.save(self.U,"rnn.U.npy")
-        np.save(self.V,"rnn.V.npy")
-        np.save(self.W,"rnn.W.npy")
+        np.save("rnn.U.npy",self.U)
+        np.save("rnn.V.npy",self.V)
+        np.save("rnn.W.npy",self.W)
         return best_loss
 
 if __name__ == "__main__":
@@ -508,13 +508,12 @@ if __name__ == "__main__":
         # --- your code here --- #
         ##########################
         rnn = RNN(vocab_size,hdim)
-        rnn = train(X=X,D=D,X_dev=X_dev,D_dev=D_dev,learning_rate=lr,back_steps=lookback)
-        run_loss = -1
-        adjusted_loss = -1
+        run_loss = rnn.train(X=X_train,D=D_train,X_dev=X_dev,D_dev=D_dev,learning_rate=lr,back_steps=lookback)
+        adjusted_loss = adjust_loss(run_loss,fraction_lost,q)
 
         print "Unadjusted: %.03f" % np.exp(run_loss)
         print "Adjusted for missing vocab: %.03f" % np.exp(adjusted_loss)
-
+        print "Mean loss: %.03f" % mean_loss(X_dev,D_dev)
     if mode == "generate":
         '''
         starter code for sequence generation
@@ -541,5 +540,7 @@ if __name__ == "__main__":
         ##########################
         # --- your code here --- #
         ##########################
+        
 
         # predict something
+
