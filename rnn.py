@@ -4,6 +4,7 @@ import numpy as np
 from sys import stdout
 import time
 import pdb
+from numpy import load
 
 class RNN(object):
     '''
@@ -250,11 +251,21 @@ class RNN(object):
         sequence = [start]
         loss = 0.
         x = [start]
-
+        y_ = np.zeros((1,self.vocab_size),dtype=np.float64)
         ##########################
         # --- your code here --- #
         ##########################
-
+        l=[]
+        while sequence[-1]!=end and len(sequence)<maxLength:
+            y,_ = self.predict(sequence)
+         #   pdb.set_trace()
+            mn=multinomial_sample(y[-1])
+            loss -= np.log(y[-1][mn])
+            sequence.append(mn)
+       
+        #for val in y:
+         #   y_ -= np.log(val)
+        loss = loss*1.0/len(sequence)
         return sequence, loss
 
     def train(self, X, D, X_dev, D_dev, epochs=10, learning_rate=0.5, anneal=5, back_steps=0, batch_size=100, min_change=0.0001, log=True):
@@ -507,13 +518,22 @@ if __name__ == "__main__":
         ##########################
         # --- your code here --- #
         ##########################
-        rnn = RNN(vocab_size,hdim)
-        run_loss = rnn.train(X=X_train,D=D_train,X_dev=X_dev,D_dev=D_dev,learning_rate=lr,back_steps=lookback)
-        adjusted_loss = adjust_loss(run_loss,fraction_lost,q)
+        U,V,W = load("rnn.U.npy"), load("rnn.V.npy"), load("rnn.W.npy")
+        vocab_size = len(V[0])
+        hdim = len(U[0])
 
-        print "Unadjusted: %.03f" % np.exp(run_loss)
-        print "Adjusted for missing vocab: %.03f" % np.exp(adjusted_loss)
-        print "Mean loss: %.03f" % mean_loss(X_dev,D_dev)
+
+        rnn = RNN(vocab_size,hdim)
+#        run_loss = rnn.train(X=X_train,D=D_train,X_dev=X_dev,D_dev=D_dev,learning_rate=lr,back_steps=lookback)
+#        adjusted_loss = adjust_loss(run_loss,fraction_lost,q)
+        rnn.U = U
+        rnn.V = V
+        rnn.W = W
+
+
+#        print "Unadjusted: %.03f" % np.exp(run_loss)
+ #       print "Adjusted for missing vocab: %.03f" % np.exp(adjusted_loss)
+        print "Mean loss: %.03f" % rnn.compute_mean_loss(X_dev,D_dev)
     if mode == "generate":
         '''
         starter code for sequence generation
@@ -541,6 +561,12 @@ if __name__ == "__main__":
         # --- your code here --- #
         ##########################
         
-
+        start=['<s>']
+        end=['</s>']
+        start = seq_to_indices(start,word_to_num)[0]
+        end = seq_to_indices(end,word_to_num)[0]
+        sentence,loss = r.generate_sequence(start,end,20)
+        out_sen = [num_to_word[sen] for sen in sentence]
+        print(out_sen,loss)
         # predict something
 
